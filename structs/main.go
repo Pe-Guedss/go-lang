@@ -14,7 +14,7 @@ type Circle struct {
 	area_cir float64
 }
 
-func (c *Circle) construtor(num int) {
+func (c Circle) construtor(num int) {
 	for c.radius == 0 {
 		c.init()
 	}
@@ -69,6 +69,16 @@ func main() {
 	num := int(0)
 	fmt.Print("Quantos círculos você quer criar? ")
 	fmt.Scan(&num)
+
+	defer func() {
+		if num < 0 {
+			fmt.Println("O número não pode ser negativo.")
+		}
+		if err := recover(); err != nil {
+			fmt.Println("\nOcorreu um erro terminal!")
+		}
+	}()
+
 	c := make([]Circle, num)
 	for i := 0; i < num; i++ {
 		c[i].radius = 0
