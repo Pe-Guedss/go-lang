@@ -47,6 +47,13 @@ type Rectangle struct {
 	wid     float64
 }
 
+func (r Rectangle) construtor(num int) {
+	for r.len == 0 || r.wid == 0 {
+		r.init()
+	}
+	r.print(num)
+}
+
 func (r Rectangle) init() {
 	r.coord_x = rand.Float32() * float32(rand.Intn(100))
 	r.coord_y = rand.Float32() * float32(rand.Intn(100))
@@ -67,21 +74,29 @@ func (r Rectangle) print(num int) {
 
 func main() {
 	num := int(0)
-	fmt.Print("Quantos círculos você quer criar? ")
-	fmt.Scan(&num)
-
 	defer func() {
-		if num < 0 {
-			fmt.Println("O número não pode ser negativo.")
-		}
 		if err := recover(); err != nil {
-			fmt.Println("\nOcorreu um erro terminal!")
+			fmt.Printf("\nOcorreu um erro (panic!) terminal!\n")
+		}
+		if num < 0 {
+			fmt.Println("\nO número não pode ser negativo.")
 		}
 	}()
 
+	fmt.Print("Quantos círculos você quer criar? ")
+	fmt.Scan(&num)
 	c := make([]Circle, num)
 	for i := 0; i < num; i++ {
 		c[i].radius = 0
 		c[i].construtor(i)
+	}
+
+	fmt.Print("Quantos retângulos você quer criar? ")
+	fmt.Scan(&num)
+	r := make([]Rectangle, num)
+	for i := 0; i < num; i++ {
+		r[i].len = 0
+		r[i].wid = 0
+		r[i].construtor(i)
 	}
 }
