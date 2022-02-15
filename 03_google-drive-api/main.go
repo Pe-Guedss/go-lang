@@ -93,13 +93,15 @@ func getService () *drive.Service {
 	return srv
 }
 
+// ========== This section is responsible to fetch files data from a drive folder ==========
+
 func getFolderId (url string) string {
 	arr := strings.Split(url, "folders/")
 
 	return arr[1]
 }
 
-func getFolderInfo (url string) *drive.FileList{
+func getFolderFiles (url string) *drive.FileList{
 	folderId := getFolderId(url)
 	query := fmt.Sprintf("parents = '%s'", folderId)
 
@@ -111,12 +113,8 @@ func getFolderInfo (url string) *drive.FileList{
 	return fileList
 }
 
-var srv *drive.Service = getService()
-
-func main() {
-	folderUrl := "https://drive.google.com/drive/u/0/folders/11ftvdwveKCM3HNM0E5SxPNYTlXRyke8L"
-
-	fileList := getFolderInfo(folderUrl)
+func getFolderInfos (folderUrl string) []*drive.File {
+	fileList := getFolderFiles(folderUrl)
 	files := fileList.Files
 
 	nextPageToken := fileList.NextPageToken
@@ -126,10 +124,21 @@ func main() {
 			fmt.Println("No files found.")
 			break
 		}
-		fileList = getFolderInfo(folderUrl)
+		fileList = getFolderFiles(folderUrl)
 
 		files = append(files, fileList.Files...)
 	}
+
+	return files
+}
+
+var srv *drive.Service = getService()
+
+func main() {
+	folderUrl := "https://drive.google.com/drive/u/0/folders/11ftvdwveKCM3HNM0E5SxPNYTlXRyke8L"
+
+	files := getFolderInfos(folderUrl)
+	
 	for index, i := range files {
 		fmt.Printf("[%d] %s (%s)\n", index, i.Name, i.Id)
 	}
