@@ -137,9 +137,24 @@ var srv *drive.Service = getService()
 func main() {
 	folderUrl := "https://drive.google.com/drive/u/0/folders/11ftvdwveKCM3HNM0E5SxPNYTlXRyke8L"
 
+	var parents []string
+	parents = append(parents, getFolderId(folderUrl))
+
+	folder, err := srv.Files.Create(&drive.File{
+		Name: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		MimeType: "application/vnd.google-apps.folder",
+		Parents: parents,
+	}).Fields("id").Do()
+
+	if err != nil {
+		fmt.Printf("Erro: %s", err)
+	}
+
 	files := getFolderInfos(folderUrl)
 	
 	for index, i := range files {
 		fmt.Printf("[%d] %s (%s)\n", index, i.Name, i.Id)
 	}
+
+	fmt.Printf("Folder: %#v\n\n aaa: %#v", folder, parents)
 }
