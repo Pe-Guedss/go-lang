@@ -93,6 +93,19 @@ func getService () *drive.Service {
 	return srv
 }
 
+// ====================================== Miscelaneous ======================================
+
+func errorPrinter (err error) {
+	if err != nil {
+		fmt.Printf(`
+		------------------------
+		The following error occurred:
+		%s
+		------------------------
+		`, err)
+	}
+}
+
 // ========== This section is responsible to fetch files data from a drive folder ==========
 
 func getFolderId (url string) string {
@@ -132,29 +145,54 @@ func getFolderInfos (folderUrl string) []*drive.File {
 	return files
 }
 
-var srv *drive.Service = getService()
+// ========== This section is responsible to create new folders ==========
 
-func main() {
-	folderUrl := "https://drive.google.com/drive/u/0/folders/11ftvdwveKCM3HNM0E5SxPNYTlXRyke8L"
+func checkFolderDuplicates (name string, folderUrl string) bool {
+	files := getFolderInfos(folderUrl)
+
+	for _, file := range files {
+		if file.Name == name && file.MimeType == "application/vnd.google-apps.folder" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func createFolder (name string, parentUrl string) *drive.File{
+	if checkFolderDuplicates(name, parentUrl) {
+		return nil
+	}
 
 	var parents []string
-	parents = append(parents, getFolderId(folderUrl))
+	parents = append(parents, getFolderId(parentUrl))
 
 	folder, err := srv.Files.Create(&drive.File{
-		Name: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		Name: name,
 		MimeType: "application/vnd.google-apps.folder",
 		Parents: parents,
 	}).Fields("id").Do()
 
-	if err != nil {
-		fmt.Printf("Erro: %s", err)
-	}
+	errorPrinter(err)
+	return folder
+}
 
-	files := getFolderInfos(folderUrl)
+var srv *drive.Service = getService()
+
+func main() {
+	folderUrl := "https://drive.google.com/drive/u/0/folders/11ftvdwveKCM3HNM0E5SxPNYTlXRyke8L"
 	
+	folder := createFolder("MyNewFolder", folderUrl)
+	if folder != nil {
+		fmt.Printf(`
+	-----------------
+	Folder ID: %s
+	-----------------
+	`, folder.Id)
+	}
+	
+	files := getFolderInfos(folderUrl)
 	for index, i := range files {
 		fmt.Printf("[%d] %s (%s)\n", index, i.Name, i.Id)
 	}
-
-	fmt.Printf("Folder: %#v\n\n aaa: %#v", folder, parents)
 }
