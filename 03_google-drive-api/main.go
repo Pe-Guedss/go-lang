@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
@@ -115,6 +116,18 @@ func prettyPrinter (msgs... string) {
 	}
 }
 
+func getGoDotEnvVariable(key string) string {
+
+	// load .env file
+	err := godotenv.Load(".env")
+  
+	if err != nil {
+	  log.Fatalf("Error loading .env file")
+	}
+  
+	return os.Getenv(key)
+}
+
 // ========== This section is responsible to fetch files data from a drive folder ==========
 
 func getFolderId (url string) string {
@@ -218,7 +231,7 @@ func copyFileTo (file *drive.File, destinationFolder string) {
 var srv *drive.Service = getService()
 
 func main() {
-	folderUrl := "https://drive.google.com/drive/u/0/folders/11ftvdwveKCM3HNM0E5SxPNYTlXRyke8L"
+	folderUrl := getGoDotEnvVariable("FOLDER_URL")
 	
 	newFolder := createFolder("MyNewFolder", folderUrl)
 	if newFolder != nil {
