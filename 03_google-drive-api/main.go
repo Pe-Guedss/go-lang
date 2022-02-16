@@ -106,6 +106,15 @@ func errorPrinter (err error) {
 	}
 }
 
+func prettyPrinter (msgs... string) {
+	for _, msg := range(msgs) {
+		fmt.Printf(`
+	-------------------
+	%s
+	-------------------`, msg)
+	}
+}
+
 // ========== This section is responsible to fetch files data from a drive folder ==========
 
 func getFolderId (url string) string {
@@ -159,9 +168,23 @@ func checkFolderDuplicates (name string, folderUrl string) bool {
 	return false
 }
 
+func getDuplicate (name string, parentUrl string) *drive.File {
+	files := getFolderInfos(parentUrl)
+
+	var file *drive.File = nil
+
+	for _, file = range files {
+		if file.Name == name && file.MimeType == "application/vnd.google-apps.folder" {
+			break
+		}
+	}
+	
+	return file
+}
+
 func createFolder (name string, parentUrl string) *drive.File{
 	if checkFolderDuplicates(name, parentUrl) {
-		return nil
+		return getDuplicate(name, parentUrl)
 	}
 
 	var parents []string
@@ -177,22 +200,40 @@ func createFolder (name string, parentUrl string) *drive.File{
 	return folder
 }
 
+// ========== This section is responsible for files manipulation ==========
+
+func copyFileTo (file *drive.File, destinationFolder string) {
+	var parents []string
+	parents = append(parents, destinationFolder)
+
+	file_copied, err := srv.Files.Copy(file.Id, &drive.File{
+		Name: file.Name,
+		Parents: parents,
+	}).Do()
+
+	errorPrinter(err)
+	prettyPrinter(fmt.Sprintf("Arquivo copiado:\n%#v", file_copied.Id))
+}
+
 var srv *drive.Service = getService()
 
 func main() {
 	folderUrl := "https://drive.google.com/drive/u/0/folders/11ftvdwveKCM3HNM0E5SxPNYTlXRyke8L"
 	
-	folder := createFolder("MyNewFolder", folderUrl)
-	if folder != nil {
-		fmt.Printf(`
-	-----------------
-	Folder ID: %s
-	-----------------
-	`, folder.Id)
+	newFolder := createFolder("MyNewFolder", folderUrl)
+	if newFolder != nil {
+		prettyPrinter(fmt.Sprintf("Folder ID: %s", newFolder.Id))
 	}
 	
 	files := getFolderInfos(folderUrl)
-	for index, i := range files {
-		fmt.Printf("[%d] %s (%s)\n", index, i.Name, i.Id)
+	for index, file := range files {
+		fmt.Printf(`
+		[%d] %s (%s)
+		-----------`, index, file.Name, file.Id)
+
+		if strings.Contains(strings.ToLower(file.Name), "grade") {
+			copyFileTo(file, newFolder.Id)
+		}
 	}
+
 }
