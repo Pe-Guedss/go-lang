@@ -3,6 +3,7 @@ module main.go
 go 1.17
 
 require (
+	github.com/joho/godotenv v1.4.0
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	google.golang.org/api v0.68.0
 )

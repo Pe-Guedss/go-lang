@@ -22,3 +22,6 @@ go.work
 
 # Credentials in JSON extension
 *.json
+
+# Ignoring Environment Varibles
+.env
