@@ -128,12 +128,44 @@ func getGoDotEnvVariable(key string) string {
 	return os.Getenv(key)
 }
 
+func checkFileDuplicates (currentFile *drive.File, folderUrl string) bool {
+	files := getFolderInfos(folderUrl)
+
+	for _, file := range files {
+		if file.Name == currentFile.Name && 
+		   file.MimeType == currentFile.MimeType {
+			return true
+		}
+	}
+
+	return false
+}
+
+func getDuplicate (currentFile *drive.File, parentUrl string) *drive.File {
+	files := getFolderInfos(parentUrl)
+
+	var file *drive.File = nil
+
+	for _, file = range files {
+		if file.Name == currentFile.Name && 
+		   file.MimeType == currentFile.MimeType {
+			break
+		}
+	}
+	
+	return file
+}
+
 // ========== This section is responsible to fetch files data from a drive folder ==========
 
 func getFolderId (url string) string {
-	arr := strings.Split(url, "folders/")
+	if strings.HasPrefix(url, "https"){
+		arr := strings.Split(url, "folders/")
 
-	return arr[1]
+		return arr[1]
+	}
+
+	return url
 }
 
 func getFolderFiles (url string) *drive.FileList{
@@ -169,45 +201,22 @@ func getFolderInfos (folderUrl string) []*drive.File {
 
 // ========== This section is responsible to create new folders ==========
 
-func checkFolderDuplicates (name string, folderUrl string) bool {
-	files := getFolderInfos(folderUrl)
-
-	for _, file := range files {
-		if file.Name == name && file.MimeType == "application/vnd.google-apps.folder" {
-			return true
-		}
-	}
-
-	return false
-}
-
-func getDuplicate (name string, parentUrl string) *drive.File {
-	files := getFolderInfos(parentUrl)
-
-	var file *drive.File = nil
-
-	for _, file = range files {
-		if file.Name == name && file.MimeType == "application/vnd.google-apps.folder" {
-			break
-		}
-	}
-	
-	return file
-}
-
 func createFolder (name string, parentUrl string) *drive.File{
-	if checkFolderDuplicates(name, parentUrl) {
-		return getDuplicate(name, parentUrl)
-	}
-
 	var parents []string
 	parents = append(parents, getFolderId(parentUrl))
 
-	folder, err := srv.Files.Create(&drive.File{
+	newFolder := &drive.File{
 		Name: name,
 		MimeType: "application/vnd.google-apps.folder",
 		Parents: parents,
-	}).Fields("id").Do()
+	}
+
+	if checkFileDuplicates(newFolder, parentUrl) {
+		prettyPrinter("This folder already exists!")
+		return getDuplicate(newFolder, parentUrl)
+	}
+
+	folder, err := srv.Files.Create(newFolder).Fields("id").Do()
 
 	errorPrinter(err)
 	return folder
@@ -215,20 +224,28 @@ func createFolder (name string, parentUrl string) *drive.File{
 
 // ========== This section is responsible for files manipulation ==========
 
-func copyFileTo (file *drive.File, destinationFolder string) {
+func copyFileTo (file *drive.File, destinationFolder string) (fileCopied *drive.File) {
+	if checkFileDuplicates(file, destinationFolder) {
+		return getDuplicate(file, destinationFolder)
+	}
+
 	var parents []string
 	parents = append(parents, destinationFolder)
 
-	file_copied, err := srv.Files.Copy(file.Id, &drive.File{
+	fileCopied, err := srv.Files.Copy(file.Id, &drive.File{
 		Name: file.Name,
 		Parents: parents,
 	}).Do()
 
 	errorPrinter(err)
-	prettyPrinter(fmt.Sprintf("Arquivo copiado:\n%#v", file_copied.Id))
+	return fileCopied
 }
 
+// ============================= Variável de Serviço do Drive =============================
+
 var srv *drive.Service = getService()
+
+// ============================== Chamada das funções criadas ==============================
 
 func main() {
 	folderUrl := getGoDotEnvVariable("FOLDER_URL")
@@ -245,7 +262,9 @@ func main() {
 		-----------`, index, file.Name, file.Id)
 
 		if strings.Contains(strings.ToLower(file.Name), "grade") {
-			copyFileTo(file, newFolder.Id)
+			copiedFile := copyFileTo(file, newFolder.Id)
+
+			prettyPrinter(fmt.Sprintf("This is the copied file:\n%#v", copiedFile))
 		}
 	}
 
