@@ -5,4 +5,7 @@ Este repositório tem por objetivo me treinar na utilização das APIS do Google
 Este programa é capaz de:
 
  - Criar uma nova pasta em um diretório especificado;
+ - Criar arquivos diversos em pastas;
+ - Checar por duplicatas de arquivos em pastas;
+ - Copiar um arquivo para outra pasta;
  - Listar todos os arquivos de um diretório especificado.
