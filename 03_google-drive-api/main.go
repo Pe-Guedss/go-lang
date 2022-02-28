@@ -224,13 +224,13 @@ func createFolder (name string, parentUrl string) *drive.File{
 
 // ========== This section is responsible for files manipulation ==========
 
-func copyFileTo (file *drive.File, destinationFolder string) (fileCopied *drive.File) {
-	if checkFileDuplicates(file, destinationFolder) {
-		return getDuplicate(file, destinationFolder)
+func copyFileTo (file *drive.File, destinationFolderId string) (fileCopied *drive.File) {
+	if checkFileDuplicates(file, destinationFolderId) {
+		return getDuplicate(file, destinationFolderId)
 	}
 
 	var parents []string
-	parents = append(parents, destinationFolder)
+	parents = append(parents, destinationFolderId)
 
 	fileCopied, err := srv.Files.Copy(file.Id, &drive.File{
 		Name: file.Name,
@@ -239,6 +239,20 @@ func copyFileTo (file *drive.File, destinationFolder string) (fileCopied *drive.
 
 	errorPrinter(err)
 	return fileCopied
+}
+
+func createFileInsideOf (file *drive.File) *drive.File {
+	for _, parentId := range(file.Parents){
+		if checkFileDuplicates(file, parentId) {
+			prettyPrinter(fmt.Sprintf("There is already a file with this name and type inside the destination folder.\nThe folder ID is: %s", parentId))
+			return getDuplicate(file, parentId)
+		}
+	}
+
+	fileCreated, err := srv.Files.Create(file).Fields("id").Do()
+
+	errorPrinter(err)
+	return fileCreated
 }
 
 // ============================= Variável de Serviço do Drive =============================
@@ -253,6 +267,15 @@ func main() {
 	newFolder := createFolder("MyNewFolder", folderUrl)
 	if newFolder != nil {
 		prettyPrinter(fmt.Sprintf("Folder ID: %s", newFolder.Id))
+	}
+
+	createdFile := createFileInsideOf(&drive.File{
+		Name: "Meu Arquivo",
+		MimeType: "application/vnd.google-apps.spreadsheet",
+		Parents: []string{newFolder.Id},
+	})
+	if createdFile != nil {
+		prettyPrinter(fmt.Sprintf("Created File ID: %s", createdFile.Id))
 	}
 	
 	files := getFolderInfos(folderUrl)
