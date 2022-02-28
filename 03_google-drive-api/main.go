@@ -262,9 +262,9 @@ var srv *drive.Service = getService()
 // ============================== Chamada das funções criadas ==============================
 
 func main() {
-	folderUrl := getGoDotEnvVariable("FOLDER_URL")
+	parentFolderUrl := getGoDotEnvVariable("PARENT_FOLDER_URL")
 	
-	newFolder := createFolder("MyNewFolder", folderUrl)
+	newFolder := createFolder("MyNewFolder", parentFolderUrl)
 	if newFolder != nil {
 		prettyPrinter(fmt.Sprintf("Folder ID: %s", newFolder.Id))
 	}
@@ -278,7 +278,7 @@ func main() {
 		prettyPrinter(fmt.Sprintf("Created File ID: %s", createdFile.Id))
 	}
 	
-	files := getFolderInfos(folderUrl)
+	files := getFolderInfos(parentFolderUrl)
 	for index, file := range files {
 		fmt.Printf(`
 		[%d] %s (%s)
@@ -286,8 +286,18 @@ func main() {
 
 		if strings.Contains(strings.ToLower(file.Name), "grade") {
 			copiedFile := copyFileTo(file, newFolder.Id)
+			prettyPrinter(fmt.Sprintf("This is the copied file:\n%#v", copiedFile.Id))
 
-			prettyPrinter(fmt.Sprintf("This is the copied file:\n%#v", copiedFile))
+			targetParentFolderUrl := getGoDotEnvVariable("OTHER_FOLDER_URL")
+			targetId := getFolderId(targetParentFolderUrl)
+			parentId := getFolderId(parentFolderUrl)
+			movedFile, err := srv.Files.Update(
+				file.Id,
+				&drive.File{},
+			).AddParents(targetId).RemoveParents(parentId).Do()
+
+			errorPrinter(err)
+			prettyPrinter(fmt.Sprintf("This is the copied file:\n%#v", movedFile))
 		}
 	}
 
