@@ -268,33 +268,19 @@ func moveFileTo (source string, target string, file *drive.File) *drive.File {
 	return movedFile
 }
 
-func uploadFiles (pathToFiles []string,
-				  targetDriveFolder string) []*drive.File{
-
-	var uploadedFiles []*drive.File
+func uploadFiles (file *os.File, targetDriveFolder string) *drive.File {
 	targetDriveFolder = getFolderId(targetDriveFolder)
 
-	for index := 0; index < len(pathToFiles); index++ {
-		// fileMetaData := &drive.File
-		file, err := os.Open(pathToFiles[index])
-		errorPrinter(err)
+	fileInfo, err := file.Stat()
+	errorPrinter(err)
 
-		fileInfo, err := file.Stat()
-		errorPrinter(err)
-		prettyPrinter(fmt.Sprintf("File name: %s\nFile Size: %d", fileInfo.Name(), fileInfo.Size()))
-		
-		uploadedfile, err := srv.Files.Create(&drive.File{
-			Name: fileInfo.Name(),
-			Parents: []string{targetDriveFolder},
-		}).Media(file).Do()
+	uploadedfile, err := srv.Files.Create(&drive.File{
+		Name: fileInfo.Name(),
+		Parents: []string{targetDriveFolder},
+	}).Media(file).Do()
 
-		file.Close()
-
-		errorPrinter(err)
-		uploadedFiles = append(uploadedFiles, uploadedfile)
-	}
-
-	return uploadedFiles
+	errorPrinter(err)
+	return uploadedfile
 }
 
 // ============================= Variável de Serviço do Drive =============================
@@ -320,12 +306,13 @@ func main() {
 		prettyPrinter(fmt.Sprintf("Created File ID: %s", createdFile.Id))
 	}
 	
+	file, err := os.Open("C:\\Users\\USER\\Pictures\\Screenshots\\Captura de Tela (7).png")
+	errorPrinter(err)
+	uploadedFile := uploadFiles(file, parentFolderUrl)
+	file.Close()
+	prettyPrinter( fmt.Sprintf("File Uploaded: %s", uploadedFile.Name) )
+	
 	files := getFolderInfos(parentFolderUrl)
-
-	uploadedFiles := uploadFiles([]string{"C:\\Users\\USER\\Pictures\\Screenshots\\Captura de Tela (1).png"}, parentFolderUrl)
-	prettyPrinter( fmt.Sprintf("%#v", uploadedFiles[0].Name) )
-
-
 	for index, file := range files {
 		fmt.Printf(`
 		[%d] %s (%s)
