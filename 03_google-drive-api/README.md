@@ -8,4 +8,6 @@ Este programa é capaz de:
  - Criar arquivos diversos em pastas;
  - Checar por duplicatas de arquivos em pastas;
  - Copiar um arquivo para outra pasta;
- - Listar todos os arquivos de um diretório especificado.
+ - Listar todos os arquivos de um diretório especificado;
+ - Mover arquivos entre pastas do Drive;
+ - Fazer upload de arquivos locais para uma pasta do Drive.
