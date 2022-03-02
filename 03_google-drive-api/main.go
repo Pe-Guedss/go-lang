@@ -306,7 +306,8 @@ func main() {
 		prettyPrinter(fmt.Sprintf("Created File ID: %s", createdFile.Id))
 	}
 	
-	file, err := os.Open("C:\\Users\\USER\\Pictures\\Screenshots\\Captura de Tela (7).png")
+	filePath := getGoDotEnvVariable("FILE_PATH")
+	file, err := os.Open(filePath)
 	errorPrinter(err)
 	uploadedFile := uploadFiles(file, parentFolderUrl)
 	file.Close()
