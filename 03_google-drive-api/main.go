@@ -255,6 +255,19 @@ func createFileInsideOf (file *drive.File) *drive.File {
 	return fileCreated
 }
 
+func moveFileTo (source string, target string, file *drive.File) *drive.File {
+	sourceId := getFolderId(source)
+	targetId := getFolderId(target)
+
+	movedFile, err := srv.Files.Update(
+		file.Id,
+		&drive.File{},
+	).AddParents(targetId).RemoveParents(sourceId).Do()
+
+	errorPrinter(err)
+	return movedFile
+}
+
 // ============================= Variável de Serviço do Drive =============================
 
 var srv *drive.Service = getService()
@@ -288,16 +301,10 @@ func main() {
 			copiedFile := copyFileTo(file, newFolder.Id)
 			prettyPrinter(fmt.Sprintf("This is the copied file:\n%#v", copiedFile.Id))
 
-			targetParentFolderUrl := getGoDotEnvVariable("OTHER_FOLDER_URL")
-			targetId := getFolderId(targetParentFolderUrl)
-			parentId := getFolderId(parentFolderUrl)
-			movedFile, err := srv.Files.Update(
-				file.Id,
-				&drive.File{},
-			).AddParents(targetId).RemoveParents(parentId).Do()
+			targetFolderUrl := getGoDotEnvVariable("OTHER_FOLDER_URL")
 
-			errorPrinter(err)
-			prettyPrinter(fmt.Sprintf("This is the copied file:\n%#v", movedFile))
+			movedFile := moveFileTo(parentFolderUrl, targetFolderUrl, file)
+			prettyPrinter(fmt.Sprintf("This is the moved file:\n%s", movedFile.Id))
 		}
 	}
 
