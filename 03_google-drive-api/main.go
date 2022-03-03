@@ -304,26 +304,26 @@ var srv *drive.Service = getService()
 func main() {
 	parentFolderUrl := getGoDotEnvVariable("PARENT_FOLDER_URL")
 	
-	// newFolder := createFolder("MyNewFolder", parentFolderUrl)
-	// if newFolder != nil {
-	// 	prettyPrinter(fmt.Sprintf("Folder ID: %s", newFolder.Id))
-	// }
+	newFolder := createFolder("MyNewFolder", parentFolderUrl)
+	if newFolder != nil {
+		prettyPrinter(fmt.Sprintf("Folder ID: %s", newFolder.Id))
+	}
 
-	// createdFile := createFileInsideOf(&drive.File{
-	// 	Name: "Meu Arquivo",
-	// 	MimeType: "application/vnd.google-apps.spreadsheet",
-	// 	Parents: []string{newFolder.Id},
-	// })
-	// if createdFile != nil {
-	// 	prettyPrinter(fmt.Sprintf("Created File ID: %s", createdFile.Id))
-	// }
+	createdFile := createFileInsideOf(&drive.File{
+		Name: "Meu Arquivo",
+		MimeType: "application/vnd.google-apps.spreadsheet",
+		Parents: []string{newFolder.Id},
+	})
+	if createdFile != nil {
+		prettyPrinter(fmt.Sprintf("Created File ID: %s", createdFile.Id))
+	}
 	
-	// filePath := getGoDotEnvVariable("FILE_PATH")
-	// file, err := os.Open(filePath)
-	// errorPrinter(err)
-	// uploadedFile := uploadFiles(file, parentFolderUrl)
-	// file.Close()
-	// prettyPrinter( fmt.Sprintf("File Uploaded: %s", uploadedFile.Name) )
+	filePath := getGoDotEnvVariable("FILE_PATH")
+	file, err := os.Open(filePath)
+	errorPrinter(err)
+	uploadedFile := uploadFiles(file, parentFolderUrl)
+	file.Close()
+	prettyPrinter( fmt.Sprintf("File Uploaded: %s", uploadedFile.Name) )
 	
 	files := getFolderInfos(parentFolderUrl)
 	for index, file := range files {
@@ -332,13 +332,13 @@ func main() {
 		-----------`, index, file.Name, file.Id)
 
 		if strings.Contains(strings.ToLower(file.Name), "grade") {
-			// copiedFile := copyFileTo(file, newFolder.Id)
-			// prettyPrinter(fmt.Sprintf("This is the copied file:\n%#v", copiedFile.Id))
+			copiedFile := copyFileTo(file, newFolder.Id)
+			prettyPrinter(fmt.Sprintf("This is the copied file:\n%#v", copiedFile.Id))
 
-			// targetFolderUrl := getGoDotEnvVariable("OTHER_FOLDER_URL")
+			targetFolderUrl := getGoDotEnvVariable("OTHER_FOLDER_URL")
 
-			// movedFile := moveFileTo(parentFolderUrl, targetFolderUrl, file)
-			// prettyPrinter(fmt.Sprintf("This is the moved file:\n%s", movedFile.Id))
+			movedFile := moveFileTo(parentFolderUrl, targetFolderUrl, file)
+			prettyPrinter(fmt.Sprintf("This is the moved file:\n%s", movedFile.Id))
 
 			downloadFiles(file, "C:\\dev", "pdf")
 		}
