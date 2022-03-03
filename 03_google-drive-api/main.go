@@ -284,12 +284,12 @@ func uploadFiles (file *os.File, targetDriveFolder string) *drive.File {
 	return uploadedfile
 }
 
-func downloadFiles (file *drive.File, localPath string) {
+func downloadFiles (file *drive.File, localPath string, fileFormat string) {
 	data, err := srv.Files.Get(file.Id).Download()
 	errorPrinter(err)
 	if data != nil{
 		os.Chdir(localPath)
-		dowloadedFile, err := os.Create(file.Name+".pdf")
+		dowloadedFile, err := os.Create(fmt.Sprintf("%s.%s", file.Name, fileFormat))
 		errorPrinter(err)
 		io.Copy(dowloadedFile, data.Body)
 	}
@@ -340,7 +340,7 @@ func main() {
 			// movedFile := moveFileTo(parentFolderUrl, targetFolderUrl, file)
 			// prettyPrinter(fmt.Sprintf("This is the moved file:\n%s", movedFile.Id))
 
-			downloadFiles(file, "C:\\dev")
+			downloadFiles(file, "C:\\dev", "pdf")
 		}
 	}
 
