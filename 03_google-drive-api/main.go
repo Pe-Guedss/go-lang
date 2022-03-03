@@ -295,6 +295,11 @@ func downloadFiles (file *drive.File, localPath string, fileFormat string) {
 	}
 }
 
+func permanentlyDeleteFile (fileId string) {
+	err := srv.Files.Delete(fileId).Do()
+	errorPrinter(err)
+}
+
 // ============================= Variável de Serviço do Drive =============================
 
 var srv *drive.Service = getService()
@@ -342,6 +347,9 @@ func main() {
 
 			downloadFiles(file, "C:\\dev", "pdf")
 		}
-	}
 
+		if strings.Contains(strings.ToLower(file.Name), "captura") {
+			permanentlyDeleteFile(file.Id)
+		}
+	}
 }
