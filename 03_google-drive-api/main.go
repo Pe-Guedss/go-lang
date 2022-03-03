@@ -129,21 +129,21 @@ func getGoDotEnvVariable(key string) string {
 	return os.Getenv(key)
 }
 
-func checkFileDuplicates (currentFile *drive.File, folderUrl string) bool {
-	files := getFolderInfos(folderUrl)
+func checkFileDuplicates (currentFile *drive.File, folderUrl string) (bool, error) {
+	files, err := getFolderInfos(folderUrl)
 
 	for _, file := range files {
 		if file.Name == currentFile.Name && 
 		   file.MimeType == currentFile.MimeType {
-			return true
+			return true, err
 		}
 	}
 
-	return false
+	return false, err
 }
 
-func getDuplicate (currentFile *drive.File, parentUrl string) *drive.File {
-	files := getFolderInfos(parentUrl)
+func getDuplicate (currentFile *drive.File, parentUrl string) (*drive.File, error) {
+	files, err := getFolderInfos(parentUrl)
 
 	var file *drive.File = nil
 
@@ -154,7 +154,7 @@ func getDuplicate (currentFile *drive.File, parentUrl string) *drive.File {
 		}
 	}
 	
-	return file
+	return file, err
 }
 
 // ========== This section is responsible to fetch files data from a drive folder ==========
@@ -169,20 +169,17 @@ func getFolderId (url string) string {
 	return url
 }
 
-func getFolderFiles (url string) *drive.FileList{
+func getFolderFiles (url string) (*drive.FileList, error){
 	folderId := getFolderId(url)
 	query := fmt.Sprintf("parents = '%s'", folderId)
 
 	fileList, err := srv.Files.List().Q(query).Do()
-	if err != nil {
-		log.Fatalf("Unable to retrieve files: %v", err)
-	}
 
-	return fileList
+	return fileList, err
 }
 
-func getFolderInfos (folderUrl string) []*drive.File {
-	fileList := getFolderFiles(folderUrl)
+func getFolderInfos (folderUrl string) ([]*drive.File, error) {
+	fileList, err := getFolderFiles(folderUrl)
 	files := fileList.Files
 
 	nextPageToken := fileList.NextPageToken
@@ -192,17 +189,17 @@ func getFolderInfos (folderUrl string) []*drive.File {
 			fmt.Println("No files found.")
 			break
 		}
-		fileList = getFolderFiles(folderUrl)
+		fileList, err = getFolderFiles(folderUrl)
 
 		files = append(files, fileList.Files...)
 	}
 
-	return files
+	return files, err
 }
 
 // ========== This section is responsible to create new folders ==========
 
-func createFolder (name string, parentUrl string) *drive.File{
+func createFolder (name string, parentUrl string) (*drive.File, error){
 	var parents []string
 	parents = append(parents, getFolderId(parentUrl))
 
@@ -212,21 +209,28 @@ func createFolder (name string, parentUrl string) *drive.File{
 		Parents: parents,
 	}
 
-	if checkFileDuplicates(newFolder, parentUrl) {
+	isDuplicate, err := checkFileDuplicates(newFolder, parentUrl)
+	if err != nil {
+		return nil, err
+	}
+	if isDuplicate {
 		prettyPrinter("This folder already exists!")
 		return getDuplicate(newFolder, parentUrl)
 	}
 
 	folder, err := srv.Files.Create(newFolder).Fields("id").Do()
-
-	errorPrinter(err)
-	return folder
+	return folder, err
 }
 
 // ========== This section is responsible for files manipulation ==========
 
-func copyFileTo (file *drive.File, destinationFolderId string) (fileCopied *drive.File) {
-	if checkFileDuplicates(file, destinationFolderId) {
+func copyFileTo (file *drive.File, destinationFolderId string) (*drive.File, error) {
+
+	isDuplicate, err := checkFileDuplicates(file, destinationFolderId)
+	if err != nil {
+		return nil, err
+	}
+	if isDuplicate {
 		return getDuplicate(file, destinationFolderId)
 	}
 
@@ -239,12 +243,16 @@ func copyFileTo (file *drive.File, destinationFolderId string) (fileCopied *driv
 	}).Do()
 
 	errorPrinter(err)
-	return fileCopied
+	return fileCopied, err
 }
 
-func createFileInsideOf (file *drive.File) *drive.File {
+func createFileInsideOf (file *drive.File) (*drive.File, error) {
 	for _, parentId := range(file.Parents){
-		if checkFileDuplicates(file, parentId) {
+		isDuplicate, err := checkFileDuplicates(file, parentId)
+		if err != nil {
+			return nil, err
+		}
+		if isDuplicate {
 			prettyPrinter(fmt.Sprintf("There is already a file with this name and type inside the destination folder.\nThe folder ID is: %s", parentId))
 			return getDuplicate(file, parentId)
 		}
@@ -252,11 +260,10 @@ func createFileInsideOf (file *drive.File) *drive.File {
 
 	fileCreated, err := srv.Files.Create(file).Fields("id").Do()
 
-	errorPrinter(err)
-	return fileCreated
+	return fileCreated, err
 }
 
-func moveFileTo (source string, target string, file *drive.File) *drive.File {
+func moveFileTo (source string, target string, file *drive.File) (*drive.File, error) {
 	sourceId := getFolderId(source)
 	targetId := getFolderId(target)
 
@@ -265,39 +272,42 @@ func moveFileTo (source string, target string, file *drive.File) *drive.File {
 		&drive.File{},
 	).AddParents(targetId).RemoveParents(sourceId).Do()
 
-	errorPrinter(err)
-	return movedFile
+	return movedFile, err
 }
 
-func uploadFiles (file *os.File, targetDriveFolder string) *drive.File {
+func uploadFiles (file *os.File, targetDriveFolder string) (*drive.File, error) {
 	targetDriveFolder = getFolderId(targetDriveFolder)
 
 	fileInfo, err := file.Stat()
-	errorPrinter(err)
+	if err != nil {
+		return nil, err
+	}
 
 	uploadedfile, err := srv.Files.Create(&drive.File{
 		Name: fileInfo.Name(),
 		Parents: []string{targetDriveFolder},
 	}).Media(file).Do()
 
-	errorPrinter(err)
-	return uploadedfile
+	return uploadedfile, err
 }
 
-func downloadFiles (file *drive.File, localPath string, fileFormat string) {
+func downloadFiles (file *drive.File, localPath string, fileFormat string) error{
 	data, err := srv.Files.Get(file.Id).Download()
-	errorPrinter(err)
 	if data != nil{
 		os.Chdir(localPath)
 		dowloadedFile, err := os.Create(fmt.Sprintf("%s.%s", file.Name, fileFormat))
-		errorPrinter(err)
+		if err != nil {
+			return err
+		}
 		io.Copy(dowloadedFile, data.Body)
 	}
+
+	return err
 }
 
-func permanentlyDeleteFile (fileId string) {
+func permanentlyDeleteFile (fileId string) error {
 	err := srv.Files.Delete(fileId).Do()
-	errorPrinter(err)
+	return err
 }
 
 // ============================= Variável de Serviço do Drive =============================
@@ -309,16 +319,18 @@ var srv *drive.Service = getService()
 func main() {
 	parentFolderUrl := getGoDotEnvVariable("PARENT_FOLDER_URL")
 	
-	newFolder := createFolder("MyNewFolder", parentFolderUrl)
+	newFolder, err := createFolder("MyNewFolder", parentFolderUrl)
+	errorPrinter(err)
 	if newFolder != nil {
 		prettyPrinter(fmt.Sprintf("Folder ID: %s", newFolder.Id))
 	}
 
-	createdFile := createFileInsideOf(&drive.File{
+	createdFile, err := createFileInsideOf(&drive.File{
 		Name: "Meu Arquivo",
 		MimeType: "application/vnd.google-apps.spreadsheet",
 		Parents: []string{newFolder.Id},
 	})
+	errorPrinter(err)
 	if createdFile != nil {
 		prettyPrinter(fmt.Sprintf("Created File ID: %s", createdFile.Id))
 	}
@@ -326,23 +338,27 @@ func main() {
 	filePath := getGoDotEnvVariable("FILE_PATH")
 	file, err := os.Open(filePath)
 	errorPrinter(err)
-	uploadedFile := uploadFiles(file, parentFolderUrl)
+	uploadedFile, err := uploadFiles(file, parentFolderUrl)
+	errorPrinter(err)
 	file.Close()
 	prettyPrinter( fmt.Sprintf("File Uploaded: %s", uploadedFile.Name) )
 	
-	files := getFolderInfos(parentFolderUrl)
+	files, err := getFolderInfos(parentFolderUrl)
+	errorPrinter(err)
 	for index, file := range files {
 		fmt.Printf(`
 		[%d] %s (%s)
 		-----------`, index, file.Name, file.Id)
 
 		if strings.Contains(strings.ToLower(file.Name), "grade") {
-			copiedFile := copyFileTo(file, newFolder.Id)
+			copiedFile, err := copyFileTo(file, newFolder.Id)
+			errorPrinter(err)
 			prettyPrinter(fmt.Sprintf("This is the copied file:\n%#v", copiedFile.Id))
 
 			targetFolderUrl := getGoDotEnvVariable("OTHER_FOLDER_URL")
 
-			movedFile := moveFileTo(parentFolderUrl, targetFolderUrl, file)
+			movedFile, err := moveFileTo(parentFolderUrl, targetFolderUrl, file)
+			errorPrinter(err)
 			prettyPrinter(fmt.Sprintf("This is the moved file:\n%s", movedFile.Id))
 
 			downloadFiles(file, "C:\\dev", "pdf")
