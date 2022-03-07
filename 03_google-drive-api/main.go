@@ -310,6 +310,11 @@ func permanentlyDeleteFile (fileId string) error {
 	return err
 }
 
+func emptyTrash () (error) {
+	err := srv.Files.EmptyTrash().Do()
+	return err
+}
+
 // ============================= Variável de Serviço do Drive =============================
 
 var srv *drive.Service = getService()
@@ -368,4 +373,6 @@ func main() {
 			permanentlyDeleteFile(file.Id)
 		}
 	}
+
+	emptyTrash()
 }
