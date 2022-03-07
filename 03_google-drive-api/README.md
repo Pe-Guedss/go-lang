@@ -10,4 +10,6 @@ Este programa é capaz de:
  - Copiar um arquivo para outra pasta;
  - Listar todos os arquivos de um diretório especificado;
  - Mover arquivos entre pastas do Drive;
- - Fazer upload de arquivos locais para uma pasta do Drive.
+ - Fazer upload de arquivos locais para uma pasta do Drive;
+ - Fazer download de arquivos do Google Drive para uma pasta local especificada;
+ - Deletar permanentemente arquivos de uma pasta do Google Drive.
