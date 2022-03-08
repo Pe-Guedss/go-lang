@@ -73,6 +73,7 @@ func saveToken(path string, token *oauth2.Token) {
 	json.NewEncoder(f).Encode(token)
 }
 
+// Gets the service used to make every drive operation
 func getService () *drive.Service {
 	ctx := context.Background()
 	b, err := ioutil.ReadFile("credentials/creds.json")
@@ -97,6 +98,8 @@ func getService () *drive.Service {
 
 // ====================================== Miscelaneous ======================================
 
+// Checks if an error is null.
+// If it is not, this function prints it.
 func errorPrinter (err error) {
 	if err != nil {
 		fmt.Printf(`
@@ -108,6 +111,7 @@ func errorPrinter (err error) {
 	}
 }
 
+// Prints a message in a more distinguible way.
 func prettyPrinter (msgs... string) {
 	for _, msg := range(msgs) {
 		fmt.Printf(`
@@ -117,6 +121,7 @@ func prettyPrinter (msgs... string) {
 	}
 }
 
+// Retrieves environment variables from the ".env" file stored in this repo.
 func getGoDotEnvVariable(key string) string {
 
 	// load .env file
@@ -129,6 +134,9 @@ func getGoDotEnvVariable(key string) string {
 	return os.Getenv(key)
 }
 
+// Checks for file duplicates inside a folder. If it finds one, the return will be true.
+// 
+// Please note that the file search is based in name and type, so independently of dates and other metadata, if two files have the same name and type, it will return true.
 func checkFileDuplicates (currentFile *drive.File, folderUrl string) (bool, error) {
 	files, err := getFolderInfos(folderUrl)
 
@@ -142,6 +150,8 @@ func checkFileDuplicates (currentFile *drive.File, folderUrl string) (bool, erro
 	return false, err
 }
 
+// Searches inside a folder for a file duplicate, when it finds, return the file found.
+// If no file is found, the return is a nil pointer.
 func getDuplicate (currentFile *drive.File, parentUrl string) (*drive.File, error) {
 	files, err := getFolderInfos(parentUrl)
 
@@ -159,6 +169,7 @@ func getDuplicate (currentFile *drive.File, parentUrl string) (*drive.File, erro
 
 // ========== This section is responsible to fetch files data from a drive folder ==========
 
+// Retrieves the ID from a drive URL. Firstly, it checks for the "https" prefix, if it does not have one, the function just returns the url given, assuming that it is already an ID.
 func getFolderId (url string) string {
 	if strings.HasPrefix(url, "https"){
 		arr := strings.Split(url, "folders/")
@@ -169,6 +180,7 @@ func getFolderId (url string) string {
 	return url
 }
 
+// Returns all the files inside a folder. You must provide an drive folder url or ID.
 func getFolderFiles (url string) (*drive.FileList, error){
 	folderId := getFolderId(url)
 	query := fmt.Sprintf("parents = '%s'", folderId)
@@ -178,6 +190,7 @@ func getFolderFiles (url string) (*drive.FileList, error){
 	return fileList, err
 }
 
+// Retrives an array of files from the "drive.FileList" structure. It checks for any additional pages and retrieves the files from those as well.
 func getFolderInfos (folderUrl string) ([]*drive.File, error) {
 	fileList, err := getFolderFiles(folderUrl)
 	files := fileList.Files
@@ -199,6 +212,11 @@ func getFolderInfos (folderUrl string) ([]*drive.File, error) {
 
 // ========== This section is responsible to create new folders ==========
 
+// This function creates a new folder inside a parent. You have to provide the name of the folder to be created, along with the parent URL or ID.
+// 
+// Please note that this function checks for duplicates. So, if there already is a folder inside the parent with the same name, it will not create a new folder.
+// 
+// This function also returns the folder created, so, if there is a duplicate, it will return the folder that already exists.
 func createFolder (name string, parentUrl string) (*drive.File, error){
 	var parents []string
 	parents = append(parents, getFolderId(parentUrl))
@@ -224,6 +242,11 @@ func createFolder (name string, parentUrl string) (*drive.File, error){
 
 // ========== This section is responsible for files manipulation ==========
 
+// This function copies a file inside a parent. You have to provide the file to be copied, as well as the destination folder ID.
+// 
+// Please note that this function checks for duplicates. So, if there already is a file inside the parent with the same name and time, it will not make the copy.
+// 
+// This function also returns the file copied, so, if there is a duplicate, it will return the file that already exists.
 func copyFileTo (file *drive.File, destinationFolderId string) (*drive.File, error) {
 
 	isDuplicate, err := checkFileDuplicates(file, destinationFolderId)
@@ -231,6 +254,7 @@ func copyFileTo (file *drive.File, destinationFolderId string) (*drive.File, err
 		return nil, err
 	}
 	if isDuplicate {
+		prettyPrinter("This file already exists inside the parent folder.")
 		return getDuplicate(file, destinationFolderId)
 	}
 
@@ -246,6 +270,11 @@ func copyFileTo (file *drive.File, destinationFolderId string) (*drive.File, err
 	return fileCopied, err
 }
 
+// This function creates a new file inside a parent. You have to provide the file that will be created. Remember to add the parent ID to the respective file struct field.
+// 
+// Please note that this function checks for duplicates. So, if there already is a file inside the parent with the same name, it will not create a new file.
+// 
+// This function also returns the file created, so, if there is a duplicate, it will return the file that already exists.
 func createFileInsideOf (file *drive.File) (*drive.File, error) {
 	for _, parentId := range(file.Parents){
 		isDuplicate, err := checkFileDuplicates(file, parentId)
@@ -263,6 +292,9 @@ func createFileInsideOf (file *drive.File) (*drive.File, error) {
 	return fileCreated, err
 }
 
+// This function moves a file to a given parent. You have to provide the source of the folder, it's destination folder, as well as the file you want to move.
+// 
+// Please note that this function *DOES NOT* checks for duplicates. So, if there already is a file inside the parent with the same name, it will move the file anyways.
 func moveFileTo (source string, target string, file *drive.File) (*drive.File, error) {
 	sourceId := getFolderId(source)
 	targetId := getFolderId(target)
@@ -275,6 +307,11 @@ func moveFileTo (source string, target string, file *drive.File) (*drive.File, e
 	return movedFile, err
 }
 
+// This function uploads a local file to a given drive parent. You have to provide the local file as an "os.File" pointer and the destination drive folder that you want to upload the file.
+// 
+// To get the local file, you can use: file, err := os.Open(filePath). Do not forget to close the file afterwards.
+// 
+// Please note that this function *DOES NOT* checks for duplicates. So, if there already is a file inside the parent with the same name, it will upload the new file anyways.
 func uploadFiles (file *os.File, targetDriveFolder string) (*drive.File, error) {
 	targetDriveFolder = getFolderId(targetDriveFolder)
 
@@ -291,6 +328,9 @@ func uploadFiles (file *os.File, targetDriveFolder string) (*drive.File, error) 
 	return uploadedfile, err
 }
 
+// This function downloads a drive file to a given local parent. You have to provide the drive file, the downloaded file format and the destination local folder that you want to upload the file.
+// 
+// Please note that this function *DOES NOT* checks for duplicates in the local folder. So, if there already is a file inside the folder with the same name, it will download the new file anyways.
 func downloadFiles (file *drive.File, localPath string, fileFormat string) error{
 	data, err := srv.Files.Get(file.Id).Download()
 	if data != nil{
@@ -305,11 +345,15 @@ func downloadFiles (file *drive.File, localPath string, fileFormat string) error
 	return err
 }
 
+// This functions permanently deletes a file. You must provide the file ID to do so.
+// 
+// Please note that this function *DOES NOT* moves the file to the trash, it just deletes it and you cannot retrieve it anymore.
 func permanentlyDeleteFile (fileId string) error {
 	err := srv.Files.Delete(fileId).Do()
 	return err
 }
 
+// This function permanently deletes all the files inside the trash.
 func emptyTrash () (error) {
 	err := srv.Files.EmptyTrash().Do()
 	return err
