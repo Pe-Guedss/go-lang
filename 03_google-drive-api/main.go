@@ -216,8 +216,10 @@ func getFolderInfos (folderUrl string) ([]*drive.File, error) {
 // 
 // Please note that this function checks for duplicates. So, if there already is a folder inside the parent with the same name, it will not create a new folder.
 // 
+// There is also a "force" parameter that accepts boolean values, only the first value is read. When the first parameter is false or not provided, the creation of the folder *WILL CHECK FOR DUPLICATES*. When the first value is true, the folder creation will be forced, 
+// 
 // This function also returns the folder created, so, if there is a duplicate, it will return the folder that already exists.
-func createFolder (name string, parentUrl string) (*drive.File, error){
+func createFolder (name string, parentUrl string, force... bool) (*drive.File, error){
 	var parents []string
 	parents = append(parents, getFolderId(parentUrl))
 
@@ -227,13 +229,15 @@ func createFolder (name string, parentUrl string) (*drive.File, error){
 		Parents: parents,
 	}
 
-	isDuplicate, err := checkFileDuplicates(newFolder, parentUrl)
-	if err != nil {
-		return nil, err
-	}
-	if isDuplicate {
-		prettyPrinter("This folder already exists!")
-		return getDuplicate(newFolder, parentUrl)
+	if len(force) == 0 || !force[0] {
+		isDuplicate, err := checkFileDuplicates(newFolder, parentUrl)
+		if err != nil {
+			return nil, err
+		}
+		if isDuplicate {
+			prettyPrinter("This folder already exists!")
+			return getDuplicate(newFolder, parentUrl)
+		}
 	}
 
 	folder, err := srv.Files.Create(newFolder).Fields("id").Do()
@@ -368,7 +372,7 @@ var srv *drive.Service = getService()
 func main() {
 	parentFolderUrl := getGoDotEnvVariable("PARENT_FOLDER_URL")
 	
-	newFolder, err := createFolder("MyNewFolder", parentFolderUrl)
+	newFolder, err := createFolder("MyNewFolder", parentFolderUrl, true)
 	errorPrinter(err)
 	if newFolder != nil {
 		prettyPrinter(fmt.Sprintf("Folder ID: %s", newFolder.Id))
