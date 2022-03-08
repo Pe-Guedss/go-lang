@@ -250,16 +250,20 @@ func createFolder (name string, parentUrl string, force... bool) (*drive.File, e
 // 
 // Please note that this function checks for duplicates. So, if there already is a file inside the parent with the same name and time, it will not make the copy.
 // 
+// There is also a "force" parameter that accepts boolean values, only the first value is read. When the first parameter is false or not provided, the creation of the folder *WILL CHECK FOR DUPLICATES*. When the first value is true, the folder creation will be forced, 
+// 
 // This function also returns the file copied, so, if there is a duplicate, it will return the file that already exists.
-func copyFileTo (file *drive.File, destinationFolderId string) (*drive.File, error) {
+func copyFileTo (file *drive.File, destinationFolderId string, force... bool) (*drive.File, error) {
 
-	isDuplicate, err := checkFileDuplicates(file, destinationFolderId)
-	if err != nil {
-		return nil, err
-	}
-	if isDuplicate {
-		prettyPrinter("This file already exists inside the parent folder.")
-		return getDuplicate(file, destinationFolderId)
+	if len(force) == 0 || !force[0] {
+		isDuplicate, err := checkFileDuplicates(file, destinationFolderId)
+		if err != nil {
+			return nil, err
+		}
+		if isDuplicate {
+			prettyPrinter("This file already exists inside the parent folder.")
+			return getDuplicate(file, destinationFolderId)
+		}
 	}
 
 	var parents []string
