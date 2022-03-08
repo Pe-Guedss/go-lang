@@ -250,7 +250,7 @@ func createFolder (name string, parentUrl string, force... bool) (*drive.File, e
 // 
 // Please note that this function checks for duplicates. So, if there already is a file inside the parent with the same name and time, it will not make the copy.
 // 
-// There is also a "force" parameter that accepts boolean values, only the first value is read. When the first parameter is false or not provided, the creation of the folder *WILL CHECK FOR DUPLICATES*. When the first value is true, the folder creation will be forced, 
+// There is also a "force" parameter that accepts boolean values, only the first value is read. When the first parameter is false or not provided, the function *WILL CHECK FOR DUPLICATES*. When the first value is true, the file copy will be forced, 
 // 
 // This function also returns the file copied, so, if there is a duplicate, it will return the file that already exists.
 func copyFileTo (file *drive.File, destinationFolderId string, force... bool) (*drive.File, error) {
@@ -282,7 +282,7 @@ func copyFileTo (file *drive.File, destinationFolderId string, force... bool) (*
 // 
 // Please note that this function checks for duplicates. So, if there already is a file inside the parent with the same name, it will not create a new file.
 // 
-// There is also a "force" parameter that accepts boolean values, only the first value is read. When the first parameter is false or not provided, the creation of the folder *WILL CHECK FOR DUPLICATES*. When the first value is true, the folder creation will be forced, 
+// There is also a "force" parameter that accepts boolean values, only the first value is read. When the first parameter is false or not provided, the creation of the file *WILL CHECK FOR DUPLICATES*. When the first value is true, the file creation will be forced, 
 // 
 // This function also returns the file created, so, if there is a duplicate, it will return the file that already exists.
 func createFileInsideOf (file *drive.File, force... bool) (*drive.File, error) {
