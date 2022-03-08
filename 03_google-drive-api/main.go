@@ -282,16 +282,20 @@ func copyFileTo (file *drive.File, destinationFolderId string, force... bool) (*
 // 
 // Please note that this function checks for duplicates. So, if there already is a file inside the parent with the same name, it will not create a new file.
 // 
+// There is also a "force" parameter that accepts boolean values, only the first value is read. When the first parameter is false or not provided, the creation of the folder *WILL CHECK FOR DUPLICATES*. When the first value is true, the folder creation will be forced, 
+// 
 // This function also returns the file created, so, if there is a duplicate, it will return the file that already exists.
-func createFileInsideOf (file *drive.File) (*drive.File, error) {
+func createFileInsideOf (file *drive.File, force... bool) (*drive.File, error) {
 	for _, parentId := range(file.Parents){
-		isDuplicate, err := checkFileDuplicates(file, parentId)
-		if err != nil {
-			return nil, err
-		}
-		if isDuplicate {
-			prettyPrinter(fmt.Sprintf("There is already a file with this name and type inside the destination folder.\nThe folder ID is: %s", parentId))
-			return getDuplicate(file, parentId)
+		if len(force) == 0 || !force[0] {
+			isDuplicate, err := checkFileDuplicates(file, parentId)
+			if err != nil {
+				return nil, err
+			}
+			if isDuplicate {
+				prettyPrinter(fmt.Sprintf("There is already a file with this name and type inside the destination folder.\nThe folder ID is: %s", parentId))
+				return getDuplicate(file, parentId)
+			}
 		}
 	}
 
