@@ -169,4 +169,16 @@ func main() {
 			fmt.Printf("%s, %s\n", row[0], row[4])
 		}
 	}
+
+
+	multipleData, err := getMultipleDataFromSpreadsheet(spreadsheetId, readRange)
+	if err != nil {
+		log.Fatalf("Unable to retrieve data from sheet: %v", err)
+	}
+	for rangeNum, vr := range multipleData.ValueRanges {
+		fmt.Printf("Range: %d\n", rangeNum)
+		for j, v := range vr.Values {
+			fmt.Printf("Index: %d - %#v\n", j, v)
+		}
+	}
 }
