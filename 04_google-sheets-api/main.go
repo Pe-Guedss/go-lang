@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
@@ -112,6 +113,25 @@ func getGoDotEnvVariable(key string) string {
 	return os.Getenv(key)
 }
 
+func getSpreadsheetId (url string) string {
+	if strings.HasPrefix(url, "https") {
+		arr := strings.Split(url, "/")
+        return arr[5]
+	} else {
+		return url
+	}
+}
+
+
+// ===================================== Reading sheets =====================================
+
+func getDataFromSpreadsheet (spreadsheetUrl string, readRange string) (readedRange *sheets.ValueRange, err error) {
+	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
+
+	readedRange, err = srv.Spreadsheets.Values.Get(spreadsheetId, readRange).Do()
+	return readedRange, err
+}
+
 
 // ================================ Sheets service variable ================================
 
@@ -127,16 +147,16 @@ func main() {
 	// https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
 	spreadsheetId := "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
 	readRange := "Class Data!A2:E"
-	resp, err := srv.Spreadsheets.Values.Get(spreadsheetId, readRange).Do()
+	data, err := getDataFromSpreadsheet(spreadsheetId, readRange)
 	if err != nil {
 		log.Fatalf("Unable to retrieve data from sheet: %v", err)
 	}
 
-	if len(resp.Values) == 0 {
+	if len(data.Values) == 0 {
 		fmt.Println("No data found.")
 	} else {
 		fmt.Println("Name, Major:")
-		for _, row := range resp.Values {
+		for _, row := range data.Values {
 			// Print columns A and E, which correspond to indices 0 and 4.
 			fmt.Printf("%s, %s\n", row[0], row[4])
 		}
