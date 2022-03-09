@@ -149,13 +149,9 @@ var srv *sheets.Service = getService()
 // ============================= Testing the created functions =============================
 
 func main() {
-	_ = getGoDotEnvVariable("TEST")
-
-	// Prints the names and majors of students in a sample spreadsheet:
-	// https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
-	spreadsheetId := "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
-	readRange := "Class Data!A2:E"
-	data, err := getDataFromSpreadsheet(spreadsheetId, readRange)
+	spreadsheetUrl := getGoDotEnvVariable("SPREADSHEET_URL")
+	readRange := getGoDotEnvVariable("SPREADSHEET_RANGE")
+	data, err := getDataFromSpreadsheet(spreadsheetUrl, readRange)
 	if err != nil {
 		log.Fatalf("Unable to retrieve data from sheet: %v", err)
 	}
@@ -171,7 +167,7 @@ func main() {
 	}
 
 
-	multipleData, err := getMultipleDataFromSpreadsheet(spreadsheetId, readRange)
+	multipleData, err := getMultipleDataFromSpreadsheet(spreadsheetUrl, readRange)
 	if err != nil {
 		log.Fatalf("Unable to retrieve data from sheet: %v", err)
 	}
