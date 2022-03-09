@@ -71,22 +71,8 @@ func saveToken(path string, token *oauth2.Token) {
 	json.NewEncoder(f).Encode(token)
 }
 
-// Retrieves environment variables from the ".env" file stored in this repo.
-func getGoDotEnvVariable(key string) string {
-
-	// load .env file
-	err := godotenv.Load(".env")
-  
-	if err != nil {
-	  log.Fatalf("Error loading .env file")
-	}
-  
-	return os.Getenv(key)
-}
-
-func main() {
-	_ = getGoDotEnvVariable("TEST")
-
+// Gets the service used to make every drive operation
+func getService () *sheets.Service {
 	ctx := context.Background()
 	b, err := ioutil.ReadFile("./credentials/creds.json")
 	if err != nil {
@@ -104,6 +90,29 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to retrieve Sheets client: %v", err)
 	}
+
+	return srv
+}
+
+// Retrieves environment variables from the ".env" file stored in this repo.
+func getGoDotEnvVariable(key string) string {
+
+	// load .env file
+	err := godotenv.Load(".env")
+  
+	if err != nil {
+	  log.Fatalf("Error loading .env file")
+	}
+  
+	return os.Getenv(key)
+}
+
+// ============================= Variável de Serviço do Sheets =============================
+
+var srv *sheets.Service = getService()
+
+func main() {
+	_ = getGoDotEnvVariable("TEST")
 
 	// Prints the names and majors of students in a sample spreadsheet:
 	// https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
