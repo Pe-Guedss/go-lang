@@ -132,6 +132,14 @@ func getDataFromSpreadsheet (spreadsheetUrl string, readRange string) (readedRan
 	return readedRange, err
 }
 
+func getMultipleDataFromSpreadsheet (spreadsheetUrl string, readRange ...string) (readedRange *sheets.BatchGetValuesResponse, err error) {
+	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
+
+	readedRange, err = srv.Spreadsheets.Values.BatchGet(spreadsheetId).Ranges(readRange...).Do()
+	// Get(spreadsheetId, readRange).Do()
+	return readedRange, err
+}
+
 
 // ================================ Sheets service variable ================================
 
