@@ -149,8 +149,8 @@ var srv *sheets.Service = getService()
 // ============================= Testing the created functions =============================
 
 func main() {
-	spreadsheetUrl := getGoDotEnvVariable("SPREADSHEET_URL")
-	readRange := getGoDotEnvVariable("SPREADSHEET_RANGE")
+	spreadsheetUrl := getGoDotEnvVariable("GOOGLE_SAMPLE_SPREADSHEET_URL")
+	readRange := getGoDotEnvVariable("GOOGLE_SAMPLE_SPREADSHEET_RANGE")
 	data, err := getDataFromSpreadsheet(spreadsheetUrl, readRange)
 	if err != nil {
 		log.Fatalf("Unable to retrieve data from sheet: %v", err)
@@ -173,8 +173,8 @@ func main() {
 	}
 	for rangeNum, vr := range multipleData.ValueRanges {
 		fmt.Printf("Range: %d\n", rangeNum)
-		for j, v := range vr.Values {
-			fmt.Printf("Index: %d - %#v\n", j, v)
+		for rowNum, rowData := range vr.Values {
+			fmt.Printf("Row: %d - %#v\n", rowNum, rowData)
 		}
 	}
 }
