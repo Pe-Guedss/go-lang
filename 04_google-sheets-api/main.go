@@ -156,6 +156,29 @@ func getMultipleDataFromSpreadsheet (spreadsheetUrl string, readRange ...string)
 }
 
 
+// =============================== Creating Spreadsheet Tabs ===============================
+
+func createSpreadsheet(spreadsheetTitle string, tabs ...string) (*sheets.Spreadsheet, error) {
+	var spreadsheetTabs []*sheets.Sheet
+	for _, tabName := range(tabs) {
+		spreadsheetTabs = append(spreadsheetTabs, &sheets.Sheet{
+			Properties: &sheets.SheetProperties{
+				Title: tabName,
+			},
+		})
+	}
+
+	sheet, err := srv.Spreadsheets.Create(&sheets.Spreadsheet{
+		Properties: &sheets.SpreadsheetProperties{
+			Title: spreadsheetTitle,
+		},
+		Sheets: spreadsheetTabs,
+	}).Do()
+
+	return sheet, err
+}
+
+
 // ================================ Sheets service variable ================================
 
 var srv *sheets.Service = getService()
@@ -188,4 +211,8 @@ func main() {
 			prettyPrinter(fmt.Sprintf("Row: %d - %#v", rowNum, rowData))
 		}
 	}
+
+	test, err := createSpreadsheet("Será que deu", "Aba 1", "Pedro", "Dev")
+	errorPrinter(err)
+	prettyPrinter(fmt.Sprintf("Nova aba: %s", test.SpreadsheetUrl))
 }
