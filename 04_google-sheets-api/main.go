@@ -122,6 +122,15 @@ func getSpreadsheetId (url string) string {
 	}
 }
 
+func errorPrinter (err error) {
+	if err != nil {
+		fmt.Printf(`
+		---------------
+		Error: %s
+		---------------`, err)
+	}
+}
+
 
 // ===================================== Reading sheets =====================================
 
@@ -152,9 +161,7 @@ func main() {
 	spreadsheetUrl := getGoDotEnvVariable("GOOGLE_SAMPLE_SPREADSHEET_URL")
 	readRange := getGoDotEnvVariable("GOOGLE_SAMPLE_SPREADSHEET_RANGE")
 	data, err := getDataFromSpreadsheet(spreadsheetUrl, readRange)
-	if err != nil {
-		log.Fatalf("Unable to retrieve data from sheet: %v", err)
-	}
+	errorPrinter(err)
 
 	if len(data.Values) == 0 {
 		fmt.Println("No data found.")
@@ -168,9 +175,7 @@ func main() {
 
 
 	multipleData, err := getMultipleDataFromSpreadsheet(spreadsheetUrl, readRange)
-	if err != nil {
-		log.Fatalf("Unable to retrieve data from sheet: %v", err)
-	}
+	errorPrinter(err)
 	for rangeNum, vr := range multipleData.ValueRanges {
 		fmt.Printf("Range: %d\n", rangeNum)
 		for rowNum, rowData := range vr.Values {
