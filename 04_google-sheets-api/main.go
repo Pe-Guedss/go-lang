@@ -131,6 +131,13 @@ func errorPrinter (err error) {
 	}
 }
 
+func prettyPrinter (msg string) {
+	fmt.Printf(`
+	-----------------
+	%s
+	-----------------`, msg)
+}
+
 
 // ===================================== Reading sheets =====================================
 
@@ -145,7 +152,6 @@ func getMultipleDataFromSpreadsheet (spreadsheetUrl string, readRange ...string)
 	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
 
 	readedRange, err = srv.Spreadsheets.Values.BatchGet(spreadsheetId).Ranges(readRange...).Do()
-	// Get(spreadsheetId, readRange).Do()
 	return readedRange, err
 }
 
@@ -164,12 +170,12 @@ func main() {
 	errorPrinter(err)
 
 	if len(data.Values) == 0 {
-		fmt.Println("No data found.")
+		prettyPrinter("No data found.")
 	} else {
 		fmt.Println("Name, Major:")
 		for _, row := range data.Values {
 			// Print columns A and E, which correspond to indices 0 and 4.
-			fmt.Printf("%s, %s\n", row[0], row[4])
+			prettyPrinter(fmt.Sprintf("%s, %s", row[0], row[4]))
 		}
 	}
 
@@ -177,9 +183,9 @@ func main() {
 	multipleData, err := getMultipleDataFromSpreadsheet(spreadsheetUrl, readRange)
 	errorPrinter(err)
 	for rangeNum, vr := range multipleData.ValueRanges {
-		fmt.Printf("Range: %d\n", rangeNum)
+		fmt.Printf("\nRange: %d", rangeNum)
 		for rowNum, rowData := range vr.Values {
-			fmt.Printf("Row: %d - %#v\n", rowNum, rowData)
+			prettyPrinter(fmt.Sprintf("Row: %d - %#v", rowNum, rowData))
 		}
 	}
 }
