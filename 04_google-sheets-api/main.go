@@ -178,6 +178,27 @@ func createSpreadsheet(spreadsheetTitle string, tabs ...string) (*sheets.Spreads
 	return sheet, err
 }
 
+func createNewTab (spreadsheetUrl string, tabNames ...string) (*sheets.BatchUpdateSpreadsheetResponse, error) {
+	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
+
+	var requests []*sheets.Request
+	for _, tabName := range(tabNames) {
+		requests = append(requests, &sheets.Request{
+			AddSheet: &sheets.AddSheetRequest{
+				Properties: &sheets.SheetProperties{
+					Title: tabName,
+				},
+			},
+		})
+	}
+	
+	update, err := srv.Spreadsheets.BatchUpdate(spreadsheetId, &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: requests,
+		IncludeSpreadsheetInResponse: true,
+	}).Do()
+	return update, err
+}
+
 
 // ================================ Sheets service variable ================================
 
@@ -215,4 +236,16 @@ func main() {
 	test, err := createSpreadsheet("Será que deu", "Aba 1", "Pedro", "Dev")
 	errorPrinter(err)
 	prettyPrinter(fmt.Sprintf("Nova aba: %s", test.SpreadsheetUrl))
+
+	mySpreadsheetUrl := getGoDotEnvVariable("MY_SPREADSHEET")
+
+	update, err := createNewTab(mySpreadsheetUrl, "Mano", "Muito", "brabíssimo")
+	errorPrinter(err)
+	prettyPrinter(update.UpdatedSpreadsheet.Sheets[len(update.UpdatedSpreadsheet.Sheets) - 1].Properties.Title)
+	
+	sheet, err := srv.Spreadsheets.Get(getSpreadsheetId(mySpreadsheetUrl)).Do()
+	errorPrinter(err)
+	for _, sheetName := range(sheet.Sheets) {
+		prettyPrinter(fmt.Sprintf("%#v", sheetName.Properties.Title))
+	}
 }
