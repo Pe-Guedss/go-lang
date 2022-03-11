@@ -199,13 +199,22 @@ func createNewSheet (spreadsheetUrl string, tabNames ...string) (*sheets.BatchUp
 
 	var requests []*sheets.Request
 	for _, tabName := range(tabNames) {
-		requests = append(requests, &sheets.Request{
-			AddSheet: &sheets.AddSheetRequest{
-				Properties: &sheets.SheetProperties{
-					Title: tabName,
+		isDuplicate, err := checkSheetDuplicates(spreadsheetUrl, tabName)
+		if err != nil {
+			return nil, err
+		}
+
+		if !isDuplicate {
+			requests = append(requests, &sheets.Request{
+				AddSheet: &sheets.AddSheetRequest{
+					Properties: &sheets.SheetProperties{
+						Title: tabName,
+					},
 				},
-			},
-		})
+			})
+		} else {
+			prettyPrinter(fmt.Sprintf("There already is a sheet with name '%s'", tabName))
+		}
 	}
 	
 	update, err := srv.Spreadsheets.BatchUpdate(spreadsheetId, &sheets.BatchUpdateSpreadsheetRequest{
@@ -303,7 +312,7 @@ func main() {
 
 	newSheet, err := createNewSheet(mySpreadsheetUrl, "Mano", "Muito", "brabíssimo")
 	errorPrinter(err)
-	prettyPrinter(newSheet.UpdatedSpreadsheet.Sheets[len(newSheet.UpdatedSpreadsheet.Sheets) - 1].Properties.Title)
+	prettyPrinter("Last tab created: " + newSheet.UpdatedSpreadsheet.Sheets[len(newSheet.UpdatedSpreadsheet.Sheets) - 1].Properties.Title)
 	
 	sheet, err := getSpreadsheetInfo(mySpreadsheetUrl)
 	errorPrinter(err)
@@ -317,7 +326,7 @@ func main() {
 	sheet, err = getSpreadsheetInfo(mySpreadsheetUrl)
 	errorPrinter(err)
 	for _, sheetName := range(sheet.Sheets) {
-		prettyPrinter(fmt.Sprintf("%#v", sheetName.Properties.Title))
+		prettyPrinter(fmt.Sprintf("Deletando: %#v", sheetName.Properties.Title))
 		_, err := deleteSheet(mySpreadsheetUrl, sheetName.Properties.SheetId)
 		errorPrinter(err)
 	}
