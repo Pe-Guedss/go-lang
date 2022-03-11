@@ -178,7 +178,7 @@ func createSpreadsheet(spreadsheetTitle string, tabs ...string) (*sheets.Spreads
 	return sheet, err
 }
 
-func createNewTab (spreadsheetUrl string, tabNames ...string) (*sheets.BatchUpdateSpreadsheetResponse, error) {
+func createNewSheet (spreadsheetUrl string, tabNames ...string) (*sheets.BatchUpdateSpreadsheetResponse, error) {
 	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
 
 	var requests []*sheets.Request
@@ -239,9 +239,9 @@ func main() {
 
 	mySpreadsheetUrl := getGoDotEnvVariable("MY_SPREADSHEET")
 
-	update, err := createNewTab(mySpreadsheetUrl, "Mano", "Muito", "brabíssimo")
+	newSheet, err := createNewSheet(mySpreadsheetUrl, "Mano", "Muito", "brabíssimo")
 	errorPrinter(err)
-	prettyPrinter(update.UpdatedSpreadsheet.Sheets[len(update.UpdatedSpreadsheet.Sheets) - 1].Properties.Title)
+	prettyPrinter(newSheet.UpdatedSpreadsheet.Sheets[len(newSheet.UpdatedSpreadsheet.Sheets) - 1].Properties.Title)
 	
 	sheet, err := srv.Spreadsheets.Get(getSpreadsheetId(mySpreadsheetUrl)).Do()
 	errorPrinter(err)
