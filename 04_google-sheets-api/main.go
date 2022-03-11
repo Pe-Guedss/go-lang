@@ -199,6 +199,26 @@ func createNewSheet (spreadsheetUrl string, tabNames ...string) (*sheets.BatchUp
 	return update, err
 }
 
+func duplicateSheet (spreadsheetUrl string, sourceSheetId int64, newSheetIndex int64, newSheetName string) (*sheets.BatchUpdateSpreadsheetResponse, error){
+	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
+
+	var requests []*sheets.Request
+	requests = append(requests, &sheets.Request{
+		DuplicateSheet: &sheets.DuplicateSheetRequest{
+			SourceSheetId: sourceSheetId,
+			InsertSheetIndex: newSheetIndex,
+			NewSheetName: newSheetName,
+		},
+	})
+
+	update, err := srv.Spreadsheets.BatchUpdate(spreadsheetId, &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: requests,
+		IncludeSpreadsheetInResponse: true,
+	}).Do()
+
+	return update, err
+}
+
 
 // ================================ Sheets service variable ================================
 
@@ -245,6 +265,13 @@ func main() {
 	
 	sheet, err := srv.Spreadsheets.Get(getSpreadsheetId(mySpreadsheetUrl)).Do()
 	errorPrinter(err)
+	for _, sheetName := range(sheet.Sheets) {
+		if sheetName.Properties.Title == "brabíssimo" {
+			duplicate, err := duplicateSheet(mySpreadsheetUrl, sheetName.Properties.SheetId, sheetName.Properties.Index + 1, "brabíssimo 2.0")
+			errorPrinter(err)
+			prettyPrinter(duplicate.SpreadsheetId)
+		}
+	}
 	for _, sheetName := range(sheet.Sheets) {
 		prettyPrinter(fmt.Sprintf("%#v", sheetName.Properties.Title))
 	}
