@@ -289,18 +289,16 @@ func main() {
 	errorPrinter(err)
 	prettyPrinter(newSheet.UpdatedSpreadsheet.Sheets[len(newSheet.UpdatedSpreadsheet.Sheets) - 1].Properties.Title)
 	
-	sheet, err := srv.Spreadsheets.Get(getSpreadsheetId(mySpreadsheetUrl)).Do()
+	sheet, err := getSpreadsheetInfo(mySpreadsheetUrl)
 	errorPrinter(err)
 	for _, sheetName := range(sheet.Sheets) {
 		if sheetName.Properties.Title == "brabíssimo" {
-			duplicate, err := duplicateSheet(mySpreadsheetUrl, sheetName.Properties.SheetId, sheetName.Properties.Index + 1, "brabíssimo 2.0")
+			_, err := duplicateSheet(mySpreadsheetUrl, sheetName.Properties.SheetId, sheetName.Properties.Index + 1, "brabíssimo 2.0")
 			errorPrinter(err)
-			prettyPrinter(duplicate.SpreadsheetId)
 		}
-
 	}
 
-	sheet, err = srv.Spreadsheets.Get(getSpreadsheetId(mySpreadsheetUrl)).Do()
+	sheet, err = getSpreadsheetInfo(mySpreadsheetUrl)
 	errorPrinter(err)
 	for _, sheetName := range(sheet.Sheets) {
 		prettyPrinter(fmt.Sprintf("%#v", sheetName.Properties.Title))
@@ -308,7 +306,7 @@ func main() {
 		errorPrinter(err)
 	}
 
-	sheet, err = srv.Spreadsheets.Get(getSpreadsheetId(mySpreadsheetUrl)).Do()
+	sheet, err = getSpreadsheetInfo(mySpreadsheetUrl)
 	errorPrinter(err)
 	for _, sheetName := range(sheet.Sheets) {
 		prettyPrinter(fmt.Sprintf("%#v", sheetName.Properties.Title))
