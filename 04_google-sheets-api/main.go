@@ -237,6 +237,14 @@ func deleteSheet (spreadsheetUrl string, sheetId int64) (*sheets.BatchUpdateSpre
 	return update, err
 }
 
+func getSpreadsheetInfo (spreadsheetUrl string) (*sheets.Spreadsheet, error) {
+	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
+
+	sheet, err := srv.Spreadsheets.Get(spreadsheetId).Do()
+
+	return sheet, err
+}
+
 
 // ================================ Sheets service variable ================================
 
