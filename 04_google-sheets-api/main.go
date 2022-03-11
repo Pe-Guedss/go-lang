@@ -228,13 +228,22 @@ func duplicateSheet (spreadsheetUrl string, sourceSheetId int64, newSheetIndex i
 	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
 
 	var requests []*sheets.Request
-	requests = append(requests, &sheets.Request{
-		DuplicateSheet: &sheets.DuplicateSheetRequest{
-			SourceSheetId: sourceSheetId,
-			InsertSheetIndex: newSheetIndex,
-			NewSheetName: newSheetName,
-		},
-	})
+	isDuplicate, err := checkSheetDuplicates(spreadsheetUrl, newSheetName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !isDuplicate {
+		requests = append(requests, &sheets.Request{
+			DuplicateSheet: &sheets.DuplicateSheetRequest{
+				SourceSheetId: sourceSheetId,
+				InsertSheetIndex: newSheetIndex,
+				NewSheetName: newSheetName,
+			},
+		})
+	} else {
+		return nil, fmt.Errorf("erro ao duplicar a aba com id %d\n Já existe uma aba com o nome %q", sourceSheetId, newSheetName)
+	}
 
 	update, err := srv.Spreadsheets.BatchUpdate(spreadsheetId, &sheets.BatchUpdateSpreadsheetRequest{
 		Requests: requests,
