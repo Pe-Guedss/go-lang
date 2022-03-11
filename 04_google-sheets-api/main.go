@@ -219,6 +219,24 @@ func duplicateSheet (spreadsheetUrl string, sourceSheetId int64, newSheetIndex i
 	return update, err
 }
 
+func deleteSheet (spreadsheetUrl string, sheetId int64) (*sheets.BatchUpdateSpreadsheetResponse, error) {
+	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
+
+	var requests []*sheets.Request
+	requests = append(requests, &sheets.Request{
+		DeleteSheet: &sheets.DeleteSheetRequest{
+			SheetId: sheetId,
+		},
+	})
+
+	update, err := srv.Spreadsheets.BatchUpdate(spreadsheetId, &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: requests,
+		IncludeSpreadsheetInResponse: true,
+	}).Do()
+
+	return update, err
+}
+
 
 // ================================ Sheets service variable ================================
 
@@ -271,7 +289,19 @@ func main() {
 			errorPrinter(err)
 			prettyPrinter(duplicate.SpreadsheetId)
 		}
+
 	}
+
+	sheet, err = srv.Spreadsheets.Get(getSpreadsheetId(mySpreadsheetUrl)).Do()
+	errorPrinter(err)
+	for _, sheetName := range(sheet.Sheets) {
+		prettyPrinter(fmt.Sprintf("%#v", sheetName.Properties.Title))
+		_, err := deleteSheet(mySpreadsheetUrl, sheetName.Properties.SheetId)
+		errorPrinter(err)
+	}
+
+	sheet, err = srv.Spreadsheets.Get(getSpreadsheetId(mySpreadsheetUrl)).Do()
+	errorPrinter(err)
 	for _, sheetName := range(sheet.Sheets) {
 		prettyPrinter(fmt.Sprintf("%#v", sheetName.Properties.Title))
 	}
