@@ -138,6 +138,22 @@ func prettyPrinter (msg string) {
 	-----------------`, msg)
 }
 
+func checkSheetDuplicates (spreadsheetUrl string, sheetName string) (bool, error) {
+	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
+	spreadsheet, err := getSpreadsheetInfo(spreadsheetId)
+	if err != nil {
+		return true, err
+	}
+
+	for _, sheet := range(spreadsheet.Sheets) {
+		if sheet.Properties.Title == sheetName {
+			return true, nil
+		}
+	}
+
+	return false, err
+}
+
 
 // ===================================== Reading sheets =====================================
 
