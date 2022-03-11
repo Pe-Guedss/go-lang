@@ -213,7 +213,7 @@ func createNewSheet (spreadsheetUrl string, tabNames ...string) (*sheets.BatchUp
 				},
 			})
 		} else {
-			prettyPrinter(fmt.Sprintf("There already is a sheet with name '%s'", tabName))
+			return nil, fmt.Errorf("erro ao criar uma aba com nome %q\njá existe uma aba com este nome", tabName)
 		}
 	}
 	
