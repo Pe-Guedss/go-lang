@@ -318,6 +318,16 @@ func writeMultipleRanges (spreadsheetUrl string, data []*sheets.ValueRange) (*sh
 	return writedRanges, err
 }
 
+func appendNewRows (spreadsheetUrl string, table [][]interface{}, writeRange string) (*sheets.AppendValuesResponse, error) {
+	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
+
+	appendedValues, err := srv.Spreadsheets.Values.Append(spreadsheetId, writeRange, &sheets.ValueRange{
+		Values: table,
+	}).ValueInputOption("USER_ENTERED").IncludeValuesInResponse(true).Do()
+
+	return appendedValues, err
+}
+
 
 // ================================ Sheets service variable ================================
 
@@ -404,6 +414,9 @@ func main() {
 				Values: data.Values,
 			})
 			_, err = writeMultipleRanges(mySpreadsheetUrl, multipleWriteData)
+			errorPrinter(err)
+
+			_, err = appendNewRows(mySpreadsheetUrl, data.Values, sheetName.Properties.Title + "!F10")
 			errorPrinter(err)
 		}	
 	}
