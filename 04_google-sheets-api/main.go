@@ -334,8 +334,9 @@ func main() {
 	mySpreadsheetUrl := getGoDotEnvVariable("MY_SPREADSHEET")
 
 	newSheet, err := createNewSheet(mySpreadsheetUrl, "Mano", "Muito", "brabíssimo")
-	errorPrinter(err)
-	prettyPrinter("Last tab created: " + newSheet.UpdatedSpreadsheet.Sheets[len(newSheet.UpdatedSpreadsheet.Sheets) - 1].Properties.Title)
+	if err == nil {
+		prettyPrinter("Last tab created: " + newSheet.UpdatedSpreadsheet.Sheets[len(newSheet.UpdatedSpreadsheet.Sheets) - 1].Properties.Title)
+	}
 	
 	sheet, err := getSpreadsheetInfo(mySpreadsheetUrl)
 	errorPrinter(err)
@@ -348,15 +349,24 @@ func main() {
 
 	sheet, err = getSpreadsheetInfo(mySpreadsheetUrl)
 	errorPrinter(err)
+	var changes []*sheets.Request
 	for _, sheetName := range(sheet.Sheets) {
 		prettyPrinter(fmt.Sprintf("Deletando: %#v", sheetName.Properties.Title))
 		_, err := deleteSheet(mySpreadsheetUrl, sheetName.Properties.SheetId)
-		errorPrinter(err)
+		if err != nil {
+			changes = append(changes, &sheets.Request{
+				DuplicateSheet: &sheets.DuplicateSheetRequest{
+					SourceSheetId: sheetName.Properties.SheetId,
+					InsertSheetIndex: sheetName.Properties.Index,
+					NewSheetName: "New sheet",
+				},
+			})
+		}
 	}
 
-	sheet, err = getSpreadsheetInfo(mySpreadsheetUrl)
+	updatedSheet, err := updateSpreadsheet(changes, mySpreadsheetUrl)
 	errorPrinter(err)
-	for _, sheetName := range(sheet.Sheets) {
+	for _, sheetName := range(updatedSheet.UpdatedSpreadsheet.Sheets) {
 		prettyPrinter(fmt.Sprintf("%#v", sheetName.Properties.Title))
 	}
 }
