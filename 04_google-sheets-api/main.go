@@ -171,8 +171,16 @@ func getMultipleDataFromSpreadsheet (spreadsheetUrl string, readRange ...string)
 	return readedRange, err
 }
 
+func getSpreadsheetInfo (spreadsheetUrl string) (*sheets.Spreadsheet, error) {
+	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
 
-// =============================== Creating Spreadsheet Tabs ===============================
+	sheet, err := srv.Spreadsheets.Get(spreadsheetId).Do()
+
+	return sheet, err
+}
+
+
+// ============================== Creating Spreadsheet & Tabs ==============================
 
 func createSpreadsheet(spreadsheetTitle string, tabs ...string) (*sheets.Spreadsheet, error) {
 	var spreadsheetTabs []*sheets.Sheet
@@ -224,6 +232,9 @@ func createNewSheet (spreadsheetUrl string, tabNames ...string) (*sheets.BatchUp
 	return update, err
 }
 
+
+// ================================= Updating Spreadsheets =================================
+
 func duplicateSheet (spreadsheetUrl string, sourceSheetId int64, newSheetIndex int64, newSheetName string) (*sheets.BatchUpdateSpreadsheetResponse, error){
 	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
 
@@ -269,14 +280,6 @@ func deleteSheet (spreadsheetUrl string, sheetId int64) (*sheets.BatchUpdateSpre
 	}).Do()
 
 	return update, err
-}
-
-func getSpreadsheetInfo (spreadsheetUrl string) (*sheets.Spreadsheet, error) {
-	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
-
-	sheet, err := srv.Spreadsheets.Get(spreadsheetId).Do()
-
-	return sheet, err
 }
 
 
