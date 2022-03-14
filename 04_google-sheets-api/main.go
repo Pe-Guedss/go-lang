@@ -282,6 +282,17 @@ func deleteSheet (spreadsheetUrl string, sheetId int64) (*sheets.BatchUpdateSpre
 	return update, err
 }
 
+func updateSpreadsheet (requestedChanges []*sheets.Request, spreadsheetUrl string) (*sheets.BatchUpdateSpreadsheetResponse, error) {
+    spreadsheetId := getSpreadsheetId(spreadsheetUrl)
+
+	update, err := srv.Spreadsheets.BatchUpdate(spreadsheetId, &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: requestedChanges,
+		IncludeSpreadsheetInResponse: true,
+	}).Do()
+
+	return update, err
+}
+
 
 // ================================ Sheets service variable ================================
 
