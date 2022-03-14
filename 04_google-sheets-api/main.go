@@ -294,6 +294,19 @@ func updateSpreadsheet (requestedChanges []*sheets.Request, spreadsheetUrl strin
 }
 
 
+// =================================== Writing in a sheet ===================================
+
+func writeSingleRange (spreadsheetUrl string, newLines [][]interface{}, writeRange string) (*sheets.UpdateValuesResponse, error) {
+	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
+
+	writedRange, err := srv.Spreadsheets.Values.Update(spreadsheetId, writeRange, &sheets.ValueRange{
+		Values: newLines,
+	}).ValueInputOption("USER_ENTERED").Do()
+
+	return writedRange, err
+}
+
+
 // ================================ Sheets service variable ================================
 
 var srv *sheets.Service = getService()
@@ -368,5 +381,7 @@ func main() {
 	errorPrinter(err)
 	for _, sheetName := range(updatedSheet.UpdatedSpreadsheet.Sheets) {
 		prettyPrinter(fmt.Sprintf("%#v", sheetName.Properties.Title))
+		_, err := writeSingleRange(mySpreadsheetUrl, data.Values, sheetName.Properties.Title+"!A1")
+		errorPrinter(err)
 	}
 }
