@@ -306,6 +306,18 @@ func writeSingleRange (spreadsheetUrl string, newLines [][]interface{}, writeRan
 	return writedRange, err
 }
 
+func writeMultipleRanges (spreadsheetUrl string, data []*sheets.ValueRange) (*sheets.BatchUpdateValuesResponse, error) {
+	spreadsheetId := getSpreadsheetId(spreadsheetUrl)
+
+	writedRanges, err := srv.Spreadsheets.Values.BatchUpdate(spreadsheetId, &sheets.BatchUpdateValuesRequest{
+		ValueInputOption: "USER_ENTERED",
+		Data: data,
+		IncludeValuesInResponse: true,
+	}).Do()
+
+	return writedRanges, err
+}
+
 
 // ================================ Sheets service variable ================================
 
@@ -340,9 +352,9 @@ func main() {
 		}
 	}
 
-	test, err := createSpreadsheet("Será que deu", "Aba 1", "Pedro", "Dev")
-	errorPrinter(err)
-	prettyPrinter(fmt.Sprintf("Nova aba: %s", test.SpreadsheetUrl))
+	// test, err := createSpreadsheet("Será que deu", "Aba 1", "Pedro", "Dev")
+	// errorPrinter(err)
+	// prettyPrinter(fmt.Sprintf("Nova aba: %s", test.SpreadsheetUrl))
 
 	mySpreadsheetUrl := getGoDotEnvVariable("MY_SPREADSHEET")
 
@@ -379,9 +391,20 @@ func main() {
 
 	updatedSheet, err := updateSpreadsheet(changes, mySpreadsheetUrl)
 	errorPrinter(err)
-	for _, sheetName := range(updatedSheet.UpdatedSpreadsheet.Sheets) {
-		prettyPrinter(fmt.Sprintf("%#v", sheetName.Properties.Title))
-		_, err := writeSingleRange(mySpreadsheetUrl, data.Values, sheetName.Properties.Title+"!A1")
-		errorPrinter(err)
+	if err == nil {
+		var multipleWriteData []*sheets.ValueRange
+		for _, sheetName := range(updatedSheet.UpdatedSpreadsheet.Sheets) {
+			prettyPrinter(fmt.Sprintf("%#v", sheetName.Properties.Title))
+	
+			_, err := writeSingleRange(mySpreadsheetUrl, data.Values, sheetName.Properties.Title+"!A1")
+			errorPrinter(err)
+	
+			multipleWriteData = append(multipleWriteData, &sheets.ValueRange{
+				Range: sheetName.Properties.Title + "!H2",
+				Values: data.Values,
+			})
+			_, err = writeMultipleRanges(mySpreadsheetUrl, multipleWriteData)
+			errorPrinter(err)
+		}	
 	}
 }
