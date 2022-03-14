@@ -301,7 +301,7 @@ func writeSingleRange (spreadsheetUrl string, newLines [][]interface{}, writeRan
 
 	writedRange, err := srv.Spreadsheets.Values.Update(spreadsheetId, writeRange, &sheets.ValueRange{
 		Values: newLines,
-	}).ValueInputOption("USER_ENTERED").Do()
+	}).ValueInputOption("USER_ENTERED").IncludeValuesInResponse(true).Do()
 
 	return writedRange, err
 }
@@ -352,9 +352,9 @@ func main() {
 		}
 	}
 
-	// test, err := createSpreadsheet("Será que deu", "Aba 1", "Pedro", "Dev")
-	// errorPrinter(err)
-	// prettyPrinter(fmt.Sprintf("Nova aba: %s", test.SpreadsheetUrl))
+	test, err := createSpreadsheet("Será que deu", "Aba 1", "Pedro", "Dev")
+	errorPrinter(err)
+	prettyPrinter(fmt.Sprintf("Nova aba: %s", test.SpreadsheetUrl))
 
 	mySpreadsheetUrl := getGoDotEnvVariable("MY_SPREADSHEET")
 
